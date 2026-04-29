@@ -269,31 +269,36 @@ function saveSession() {
   try {
     if (!state.currentTripCode || !state.currentUserId) {
       sessionStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(SESSION_KEY);
       return;
     }
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    const session = JSON.stringify({
       tripCode: state.currentTripCode,
       userId: state.currentUserId,
       userName: state.currentUserName
-    }));
+    });
+    sessionStorage.setItem(SESSION_KEY, session);
+    localStorage.setItem(SESSION_KEY, session);
   } catch (e) {}
 }
 
 function loadSession() {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
+    const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
     if (!raw) return;
     const session = JSON.parse(raw);
     const trip = state.trips?.[session.tripCode];
     const member = trip?.members?.[session.userId];
     if (!trip || !member) {
       sessionStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(SESSION_KEY);
       return;
     }
     state.currentTripCode = session.tripCode;
     state.currentUserId = member.id;
     state.currentUserName = member.name;
     state.isAdmin = member.id === trip.adminId;
+    saveSession();
   } catch (e) {}
 }
 
@@ -594,7 +599,10 @@ function clearCurrentSession() {
   state.currentUserId = null;
   state.currentUserName = null;
   state.isAdmin = false;
-  try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_KEY);
+  } catch (e) {}
 }
 
 function deleteExpense(expenseId) {
@@ -655,7 +663,7 @@ function leaveTrip() {
   });
   saveState();
   clearCurrentSession();
-  showScreen(getPrimaryTripCode() ? 'join-trip' : 'landing');
+  showScreen('landing');
   showToast('You left the trip.');
 }
 
@@ -1047,8 +1055,6 @@ async function initApp() {
   if (state.currentTripCode && state.trips[state.currentTripCode]) {
     renderApp();
     showScreen('main');
-  } else if (getPrimaryTripCode()) {
-    showScreen('join-trip');
   } else {
     showScreen('landing');
   }
