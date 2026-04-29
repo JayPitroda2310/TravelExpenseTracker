@@ -28,7 +28,7 @@ function send(res, status, body, type = 'text/plain; charset=utf-8') {
   res.end(body);
 }
 
-const server = http.createServer((req, res) => {
+function handler(req, res) {
   const reqUrl = new URL(req.url, `http://${HOST}:${PORT}`);
   let pathname = decodeURIComponent(reqUrl.pathname);
 
@@ -52,9 +52,13 @@ const server = http.createServer((req, res) => {
       send(res, 200, data, mime);
     });
   });
-});
+}
 
-server.listen(PORT, HOST, () => {
-  console.log(`Trip Vault running at http://${HOST}:${PORT}/trip-vault.html`);
-});
+if (require.main === module) {
+  const server = http.createServer(handler);
+  server.listen(PORT, HOST, () => {
+    console.log(`Trip Vault running at http://${HOST}:${PORT}/trip-vault.html`);
+  });
+}
 
+module.exports = handler;
