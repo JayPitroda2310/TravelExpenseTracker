@@ -1,0 +1,213 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Trip Vault - Travel Expense Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div id="app">
+<div id="toast" class="toast"></div>
+
+<!-- LANDING -->
+<div id="landing" class="screen active">
+  <div class="logo-mark">₹</div>
+  <div>
+    <div class="landing-title">Trip Vault</div>
+    <p class="landing-sub" style="margin-top:8px">Pool money. Split expenses.<br>Settle up. Travel stress-free.</p>
+  </div>
+  <div class="landing-btns">
+    <button class="btn" onclick="showScreen('create-trip')">+ Create a Trip</button>
+    <div class="divider-text">or</div>
+    <button class="btn btn-ghost" onclick="showScreen('join-trip')">Join with Code</button>
+  </div>
+</div>
+
+<!-- CREATE TRIP -->
+<div id="create-trip" class="screen form-screen">
+  <button class="back-btn" onclick="showScreen('landing')"><- Back</button>
+  <h2>Create Trip</h2>
+  <p>You'll be the admin. Share the join code with your group.</p>
+  <div class="input-group">
+    <label>Your Name</label>
+    <input type="text" id="admin-name" placeholder="e.g. Arjun" />
+  </div>
+  <div class="input-group">
+    <label>Trip Name</label>
+    <input type="text" id="trip-name-input" placeholder="e.g. Goa 2025" />
+  </div>
+  <button class="btn" onclick="createTrip()">Create Trip -></button>
+</div>
+
+<!-- JOIN TRIP -->
+<div id="join-trip" class="screen form-screen">
+  <button class="back-btn" onclick="showScreen('landing')"><- Back</button>
+  <h2>Join a Trip</h2>
+  <p>Enter the 6-digit code shared by your admin.</p>
+  <div class="input-group">
+    <label>Your Name</label>
+    <input type="text" id="member-name" placeholder="e.g. Priya" />
+  </div>
+  <div class="input-group">
+    <label>Join Code</label>
+    <input type="text" id="join-code-input" placeholder="ABC123" maxlength="6"
+      style="text-transform:uppercase;letter-spacing:4px;font-family:var(--font);font-size:20px;text-align:center" />
+  </div>
+  <button class="btn" onclick="joinTrip()">Join Trip -></button>
+</div>
+
+<!-- MAIN APP -->
+<div id="main" class="screen">
+  <div class="header">
+    <div class="header-top">
+      <div class="trip-name" id="header-trip-name">Trip</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="role-badge" id="role-badge">Member</div>
+        <button id="code-btn" onclick="showCodeModal()"
+          style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit">
+          Share Code
+        </button>
+      </div>
+    </div>
+    <div class="pool-display">
+      <div class="pool-summary">
+        <div>
+          <div class="pool-label">Pool Balance</div>
+          <div class="pool-amount" id="pool-display">₹0</div>
+          <div class="pool-total-inline">out of <span id="pool-total-main">₹0</span></div>
+        </div>
+        <div>
+          <div class="pool-label">My Left</div>
+          <div class="pool-amount pool-amount-small" id="pool-my-left-main">₹0</div>
+          <div class="pool-total-inline">out of <span id="pool-my-total">₹0</span></div>
+        </div>
+      </div>
+      <div class="pool-bar"><div class="pool-bar-fill" id="pool-bar" style="width:100%"></div></div>
+      <div class="pool-meta">
+        <div class="pool-meta-item">Spent <span id="pool-spent">₹0</span></div>
+        <div class="pool-meta-item">Members <span id="pool-members">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('expenses')">Expenses</button>
+    <button class="tab" onclick="switchTab('settle')">Settle</button>
+    <button class="tab" onclick="switchTab('txns')">Txns</button>
+    <button class="tab" onclick="switchTab('members')">Members</button>
+  </div>
+
+  <div id="tab-expenses" class="tab-content active">
+    <button class="add-expense-btn" onclick="openExpenseModal()">+ Add Expense</button>
+    <div id="expenses-list"></div>
+  </div>
+
+  <div id="tab-members" class="tab-content">
+    <div id="members-list"></div>
+    <div id="my-pool-section" style="margin-top:1rem">
+      <div class="section-title">My Pool</div>
+      <div class="info-box">
+        <strong>Remaining:</strong>
+        <span id="my-pool-remaining"></span>
+      </div>
+    </div>
+    <div id="admin-pool-section" style="display:none;margin-top:1rem">
+      <div class="section-title">Admin Controls</div>
+      <div class="info-box">
+        <strong>Join Code:</strong>
+        <span id="inline-code" style="font-family:var(--font);letter-spacing:3px"></span>
+      </div>
+      <div class="input-group" style="margin-bottom:10px">
+        <label>Member</label>
+        <select id="add-pool-member"></select>
+      </div>
+      <div class="input-group" style="margin-bottom:10px">
+        <label>Add to Member Pool (₹)</label>
+        <input type="number" id="add-pool-input" placeholder="Amount to add" />
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="addToPool()" style="width:100%">Add to Pool</button>
+    </div>
+    <div id="leave-trip-section" style="display:none;margin-top:1rem">
+      <button class="btn btn-ghost btn-danger" onclick="leaveTrip()" style="width:100%">Leave Trip</button>
+    </div>
+  </div>
+
+  <div id="tab-settle" class="tab-content">
+    <div id="settlements-list"></div>
+  </div>
+
+  <div id="tab-txns" class="tab-content">
+    <div id="txns-list"></div>
+  </div>
+</div>
+
+<!-- ADD EXPENSE MODAL -->
+<div id="expense-modal" class="modal-overlay" onclick="closeExpenseModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="expense-modal-title">Add Expense</h3>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Description</label>
+      <input type="text" id="exp-desc" placeholder="e.g. Hotel stay" />
+    </div>
+    <div class="form-row" style="margin-bottom:12px">
+      <div class="input-group">
+        <label>Amount (₹)</label>
+        <input type="number" id="exp-amount" placeholder="0" oninput="updateSplitAmounts()" />
+      </div>
+      <div class="input-group">
+        <label>Category</label>
+        <select id="exp-category">
+          <option>🏨 Stay</option>
+          <option>🍔 Food</option>
+          <option>🚗 Travel</option>
+          <option>🎭 Activity</option>
+          <option>🛍 Shopping</option>
+          <option>💊 Medical</option>
+          <option>📦 Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Paid By</label>
+      <select id="exp-paid-by"></select>
+    </div>
+    <div class="input-group" style="margin-bottom:8px">
+      <label>Split Type</label>
+      <div class="split-tabs" style="margin-top:6px">
+        <div class="split-tab active" onclick="setSplitType('equal')">Equal</div>
+        <div class="split-tab" onclick="setSplitType('unequal')">Unequal (₹)</div>
+      </div>
+    </div>
+    <div class="input-group" style="margin-bottom:4px">
+      <label>Split Among</label>
+    </div>
+    <div id="split-members-list" class="members-list-split"></div>
+    <div id="split-total-display" class="split-total-row" style="margin-bottom:16px"></div>
+    <button class="btn" id="expense-submit-btn" onclick="saveExpense()" style="margin-top:4px">Add Expense</button>
+  </div>
+</div>
+
+<!-- CODE MODAL -->
+<div id="code-modal" class="modal-overlay" onclick="closeCodeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>Share Join Code</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem">
+      Send this code to your travel buddies so they can join.
+    </p>
+    <div class="code-display" id="modal-code"></div>
+    <p style="font-size:12px;color:var(--text3);text-align:center;margin-top:12px">
+      Ask them to enter this in "Join with Code"
+    </p>
+    <button class="btn btn-ghost" onclick="copyCode()" style="margin-top:1rem">Copy Code</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./app.js"></script>
+</body>
+</html>
