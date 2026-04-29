@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -36,8 +36,16 @@
     <input type="text" id="admin-name" placeholder="e.g. Arjun" />
   </div>
   <div class="input-group">
+    <label>Your Password</label>
+    <input type="password" id="admin-password" placeholder="Create your password" autocomplete="new-password" />
+  </div>
+  <div class="input-group">
     <label>Trip Name</label>
     <input type="text" id="trip-name-input" placeholder="e.g. Goa 2025" />
+  </div>
+  <div class="input-group">
+    <label>Trip Password</label>
+    <input type="password" id="trip-password-create" placeholder="Password needed with join code" autocomplete="new-password" />
   </div>
   <button class="btn" onclick="createTrip()">Create Trip -></button>
 </div>
@@ -52,9 +60,17 @@
     <input type="text" id="member-name" placeholder="e.g. Priya" />
   </div>
   <div class="input-group">
+    <label>Your Password</label>
+    <input type="password" id="member-password" placeholder="New or existing member password" autocomplete="current-password" />
+  </div>
+  <div class="input-group">
     <label>Join Code</label>
     <input type="text" id="join-code-input" placeholder="ABC123" maxlength="6"
       style="text-transform:uppercase;letter-spacing:4px;font-family:var(--font);font-size:20px;text-align:center" />
+  </div>
+  <div class="input-group">
+    <label>Trip Password</label>
+    <input type="password" id="trip-password-join" placeholder="Shared by admin" autocomplete="current-password" />
   </div>
   <button class="btn" onclick="joinTrip()">Join Trip -></button>
 </div>
@@ -95,14 +111,22 @@
 
   <div class="tabs">
     <button class="tab active" onclick="switchTab('expenses')">Expenses</button>
+    <button class="tab" onclick="switchTab('history')">History</button>
     <button class="tab" onclick="switchTab('settle')">Settle</button>
     <button class="tab" onclick="switchTab('txns')">Txns</button>
     <button class="tab" onclick="switchTab('members')">Members</button>
   </div>
 
   <div id="tab-expenses" class="tab-content active">
-    <button class="add-expense-btn" onclick="openExpenseModal()">+ Add Expense</button>
+    <div class="expense-toolbar">
+      <button class="add-expense-btn" id="add-expense-btn" onclick="openExpenseModal()">+ Add Expense</button>
+      <button class="export-btn" onclick="exportTripExcel()">Export Excel</button>
+    </div>
     <div id="expenses-list"></div>
+  </div>
+
+  <div id="tab-history" class="tab-content">
+    <div id="history-list" style="overflow-x:auto;"></div>
   </div>
 
   <div id="tab-members" class="tab-content">
@@ -119,6 +143,9 @@
       <div class="info-box">
         <strong>Join Code:</strong>
         <span id="inline-code" style="font-family:var(--font);letter-spacing:3px"></span>
+        <br><br>
+        <strong>Trip Password:</strong>
+        <span id="inline-trip-pass" style="font-size:12px;color:var(--text2)">Encrypted (cannot view)</span>
       </div>
       <div class="input-group" style="margin-bottom:10px">
         <label>Member</label>
@@ -127,6 +154,20 @@
       <div class="input-group" style="margin-bottom:10px">
         <label>Add to Member Pool (₹)</label>
         <input type="number" id="add-pool-input" placeholder="Amount to add" />
+      </div>
+      <div class="input-group" style="margin-bottom:10px">
+        <label>Payment Method</label>
+        <select id="add-pool-payment-method">
+          <option value="Cash">Cash</option>
+          <option value="UPI">UPI</option>
+          <option value="Card">Card</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="input-group" style="margin-bottom:10px">
+        <label>Contribution Date & Time</label>
+        <input type="datetime-local" id="add-pool-datetime" />
       </div>
       <button class="btn btn-ghost btn-sm" onclick="addToPool()" style="width:100%">Add to Pool</button>
     </div>
@@ -175,6 +216,16 @@
       <label>Paid By</label>
       <select id="exp-paid-by"></select>
     </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Payment Method</label>
+      <select id="exp-payment-method">
+        <option value="Cash">Cash</option>
+        <option value="UPI">UPI</option>
+        <option value="Card">Card</option>
+        <option value="Bank Transfer">Bank Transfer</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
     <div class="input-group" style="margin-bottom:8px">
       <label>Split Type</label>
       <div class="split-tabs" style="margin-top:6px">
@@ -207,7 +258,12 @@
   </div>
 </div>
 
+<script src="./config.js"></script>
+<script src="./runtime-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase-store.js"></script>
+<script src="./remote-storage.js"></script>
 <script src="./app.js"></script>
+<script src="./excel-export.js"></script>
 </body>
 </html>

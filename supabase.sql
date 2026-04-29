@@ -18,6 +18,8 @@ create table public.trips (
   id text primary key,
   code text not null unique check (char_length(code) = 6),
   name text not null,
+  password_salt text,
+  password_hash text,
   initial_pool numeric(12,2) not null default 0 check (initial_pool >= 0),
   current_pool numeric(12,2) not null default 0 check (current_pool >= 0),
   admin_member_id text,
@@ -28,6 +30,8 @@ create table public.members (
   id text primary key,
   trip_id text not null references public.trips(id) on delete cascade,
   name text not null,
+  password_salt text,
+  password_hash text,
   contribution numeric(12,2) not null default 0 check (contribution >= 0),
   joined_at timestamptz not null default now()
 );
@@ -41,6 +45,7 @@ create table public.expenses (
   description text not null,
   amount numeric(12,2) not null check (amount > 0),
   category text not null,
+  payment_method text not null default 'Cash',
   paid_by_member_id text not null references public.members(id) on delete restrict,
   split_type text not null check (split_type in ('equal','unequal','percent')),
   split_label text not null,
@@ -60,6 +65,12 @@ create table public.settlements (
   from_member_id text not null references public.members(id) on delete restrict,
   to_member_id text not null references public.members(id) on delete restrict,
   amount numeric(12,2) not null check (amount > 0),
+  payment_method text not null default 'Cash',
+  status text not null default 'confirmed' check (status in ('pending_confirmation','confirmed')),
+  paid_at timestamptz,
+  confirmed_at timestamptz,
+  recorded_by_member_id text references public.members(id) on delete set null,
+  confirmed_by_member_id text references public.members(id) on delete set null,
   created_at timestamptz not null default now(),
   check (from_member_id <> to_member_id)
 );
@@ -67,9 +78,10 @@ create table public.settlements (
 create table public.transactions (
   id text primary key,
   trip_id text not null references public.trips(id) on delete cascade,
-  type text not null check (type in ('join','expense','settlement')),
+  type text not null check (type in ('join','pool','expense','settlement')),
   description text not null,
   amount numeric(12,2) not null default 0 check (amount >= 0),
+  payment_method text,
   member_id text references public.members(id) on delete set null,
   created_at timestamptz not null default now()
 );
