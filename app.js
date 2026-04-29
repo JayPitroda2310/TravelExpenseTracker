@@ -14,6 +14,8 @@ const LOCAL_STATE_KEY = 'tripvault_state';
 const SESSION_KEY = 'tripvault_session';
 let supabaseClient = null;
 let editingExpenseId = null;
+let realtimeChannel = null;
+let remoteRenderTimer = null;
 
 function initSupabase() {
   try {
@@ -106,6 +108,60 @@ async function saveStateRemote() {
     console.error('Supabase save exception:', e);
     showToast('Supabase save exception: ' + (e.message || 'unknown'));
   }
+}
+
+function applyRemoteState(appState) {
+  const activeScreen = document.querySelector('.screen.active')?.id;
+  const previousTripCode = state.currentTripCode;
+  const previousUserId = state.currentUserId;
+
+  applyPersistedTripState(appState);
+  loadSession();
+  try { localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(getPersistableState())); } catch (e) {}
+
+  const trip = state.currentTripCode ? state.trips[state.currentTripCode] : null;
+  const memberExists = trip?.members?.[state.currentUserId];
+
+  if (trip && memberExists) {
+    renderApp();
+    if (activeScreen === 'landing' || activeScreen === 'create-trip' || activeScreen === 'join-trip') {
+      showScreen('main');
+    }
+    return;
+  }
+
+  if (previousTripCode && previousUserId) clearCurrentSession();
+  if (activeScreen === 'main') showScreen('landing');
+}
+
+function handleRemoteStateChange(payload) {
+  const appState = payload?.new?.app_state;
+  if (!appState) return;
+
+  clearTimeout(remoteRenderTimer);
+  remoteRenderTimer = setTimeout(() => applyRemoteState(appState), 100);
+}
+
+function subscribeToRealtimeState() {
+  if (!supabaseClient || realtimeChannel) return;
+
+  realtimeChannel = supabaseClient
+    .channel('trip-vault-state')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'tripvault_state',
+        filter: `id=eq.${SUPABASE_STATE_ID}`
+      },
+      handleRemoteStateChange
+    )
+    .subscribe(status => {
+      if (status === 'CHANNEL_ERROR') {
+        console.error('Supabase realtime channel error');
+      }
+    });
 }
 
 function toIso(ts) {
@@ -1052,6 +1108,7 @@ async function initApp() {
   window.runTripVaultRWTest = debugSupabaseRW;
   await testSupabaseConnection();
   await loadState();
+  subscribeToRealtimeState();
   if (state.currentTripCode && state.trips[state.currentTripCode]) {
     renderApp();
     showScreen('main');

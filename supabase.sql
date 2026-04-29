@@ -127,3 +127,10 @@ grant select, insert, update, delete on public.expenses to anon, authenticated;
 grant select, insert, update, delete on public.expense_splits to anon, authenticated;
 grant select, insert, update, delete on public.settlements to anon, authenticated;
 grant select, insert, update, delete on public.transactions to anon, authenticated;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.tripvault_state;
+exception
+  when duplicate_object then null;
+end $$;
