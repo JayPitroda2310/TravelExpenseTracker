@@ -1,5 +1,14 @@
 {
   "version": 2,
+  "builds": [
+    { "src": "trip-vault.html", "use": "@vercel/static" },
+    { "src": "styles.css", "use": "@vercel/static" },
+    { "src": "app.js", "use": "@vercel/static" },
+    { "src": "config.js", "use": "@vercel/static" },
+    { "src": "remote-storage.js", "use": "@vercel/static" },
+    { "src": "supabase-store.js", "use": "@vercel/static" },
+    { "src": "excel-export.js", "use": "@vercel/static" }
+  ],
   "routes": [
     {
       "src": "/",
